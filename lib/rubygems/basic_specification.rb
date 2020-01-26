@@ -274,9 +274,16 @@ class Gem::BasicSpecification
   # Return all files in this gem that match for +glob+.
 
   def matches_for_glob(glob) # TODO: rename?
-    glob = File.join(self.lib_dirs_glob, glob)
+    glob = self.requirable_glob_for(glob)
 
     Dir[glob].map { |f| f.tap(&Gem::UNTAINT) } # FIX our tests are broken, run w/ SAFE=1
+  end
+
+  ##
+  # Prepends the passed +glob+ with requirable paths in this gem.
+
+  def requirable_glob_for(glob)
+    File.join(self.lib_dirs_glob, glob)
   end
 
   ##
