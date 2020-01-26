@@ -159,6 +159,7 @@ class Gem::Uninstaller
 
     remove_executables @spec
     remove @spec
+    regenerate_plugins @spec
 
     Gem.post_uninstall_hooks.each do |hook|
       hook.call self
@@ -267,6 +268,29 @@ class Gem::Uninstaller
     say "Successfully uninstalled #{spec.full_name}"
 
     Gem::Specification.reset
+  end
+
+  ##
+  # Regenerates plugin wrappers for +spec+.
+
+  def regenerate_plugins(spec)
+    latest = Gem::Specification.latest_specs(true).find { |installed_spec| installed_spec.name == spec.name }
+    return if latest.nil?
+
+    plugins = latest.matches_for_glob("rubygems#{Gem.plugin_suffix_pattern}")
+    return if plugins.empty?
+
+    plugins.each do |plugin|
+      plugin_script_path = File.join Gem.plugins_dir, latest.plugin_name_for(File.extname(plugin))
+
+      FileUtils.rm_f plugin_script_path
+
+      File.open plugin_script_path, 'wb' do |file|
+        file.puts "require '#{plugin}'"
+      end
+
+      verbose plugin_script_path
+    end
   end
 
   ##

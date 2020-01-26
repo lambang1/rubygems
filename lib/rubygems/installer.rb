@@ -329,6 +329,8 @@ class Gem::Installer
       run_post_build_hooks
     end
 
+    generate_plugins
+
     generate_bin
 
     unless @options[:install_as_default]
@@ -520,7 +522,26 @@ class Gem::Installer
       else
         generate_bin_symlink filename, @bin_dir
       end
+    end
+  end
 
+  def generate_plugins # :nodoc:
+    plugins = spec.matches_for_glob("rubygems#{Gem.plugin_suffix_pattern}")
+    return if plugins.empty?
+
+    latest = Gem::Specification.latest_specs(true).find { |installed_spec| installed_spec.name == spec.name }
+    return if latest.nil? || latest.version > spec.version
+
+    plugins.each do |plugin|
+      plugin_script_path = File.join Gem.plugins_dir, spec.plugin_name_for(File.extname(plugin))
+
+      FileUtils.rm_f plugin_script_path
+
+      File.open plugin_script_path, 'wb' do |file|
+        file.puts "require '#{plugin}'"
+      end
+
+      verbose plugin_script_path
     end
   end
 

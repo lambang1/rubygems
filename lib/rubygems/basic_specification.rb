@@ -305,6 +305,14 @@ class Gem::BasicSpecification
   end
 
   ##
+  # Returns the name with which a rubygems plugin for this gem is installed, for
+  # a specific file +extension+.
+
+  def plugin_name_for(extension)
+    "#{name}_plugin#{extension}"
+  end
+
+  ##
   # Return a Gem::Specification from this gem
 
   def to_spec
